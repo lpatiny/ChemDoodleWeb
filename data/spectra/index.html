@@ -30,13 +30,18 @@ function addJcamp(url, options) {
 					perspective.loadSpectrum(spectrum);
 					
 					
-					var info="Nb points: "+spectrum.data.length;
+					var info=[];
+					info.push("Nb points: "+spectrum.data.length);
+					
+					info.push("minX: "+spectrum.minX);
+					info.push("maxX: "+spectrum.maxX);
+					console.log(spectrum);
 				/*	if (spectrum.data.length>10) {
 						for (var i=0; i<10; i++) {
 							console.log(spectrum.data[i]);
 						}
 					}*/
-					$("#info").html(info);
+					$("#info").html(info.join("<br>"));
 					
 				}
 			}
@@ -103,9 +108,7 @@ Varian
 <tr>
 <td>UV</td>
 <td>
-<button onClick="addJcamp('iChemLabsInternalChloroethane.jdx');">iChemLabsInternalChloroethane.jdx</button>
-<button onClick="addJcamp('iChemLabsInternalChloroethane-new.jdx');">iChemLabsInternalChloroethane-new.jdx</button>
-</td>
+<button onClick="addJcamp('uv_ACD.jdx');">uv_ACD.jdx</button></td>
 </tr>
 
 

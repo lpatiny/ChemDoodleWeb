@@ -7094,7 +7094,7 @@ ChemDoodle.RESIDUE = (function() {
 								var decipher = data[k];
 								if (k==1 && (lastDif || lastDif==0)) {
 									// we could check here if the previous value is really correct
-							//		console.log("LastDif: "+lastDif+" - "+expectedCurrentX+" - "+currentX+" - "+(expectedCurrentX-currentX)/deltaX);
+									// console.log("LastDif: "+lastDif+" - "+expectedCurrentX+" - "+currentX+" - "+(expectedCurrentX-currentX)/deltaX);
 									
 									
 								} else {
@@ -7103,26 +7103,27 @@ ChemDoodle.RESIDUE = (function() {
 										// spectra efficient, DUPS are actually
 										// discarded, except the last y!
 										var dup = parseInt(DUP_HASH[decipher.charAt(0)] + decipher.substring(1)) - 1;
-										
-										/** Non optmized way, good for testing but all the points are there **/
-										/*
-										for ( var l = 0; l < dup; l++) {
-											currentX += abscissaSpacing;
+
+										if (false) {
+											/** Non optmized way, good for testing but all the points are there **/
+											for ( var l = 0; l < dup; l++) {
+												currentX += abscissaSpacing;
+												if (lastDif) {
+													currentY = currentY + lastDif;
+												}
+												spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
+											}
+										} else {
+											/** Optimized, if duplicates we just don't put them **/
+											
+											currentX += abscissaSpacing*dup;
 											if (lastDif) {
-												currentY = currentY + lastDif;
+												currentY = currentY + lastDif*dup;
 											}
 											spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
-										}
-										*/
 										
-										/** Optimized, if duplicates we just don't put them **/
-										currentX += abscissaSpacing*dup;
-										if (lastDif) {
-											currentY = currentY + lastDif*dup;
 										}
 
-
-										spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
 									} else if (DIF_HASH[decipher.charAt(0)] != null) {
 										currentX += abscissaSpacing;
 										lastDif = this.getValue(decipher);
