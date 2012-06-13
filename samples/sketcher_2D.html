@@ -1,0 +1,33 @@
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<link rel="stylesheet" href="../install/ChemDoodleWeb.css" type="text/css">
+<script type="text/javascript" src="../install/ChemDoodleWeb-libs.js"></script>
+<script type="text/javascript" src="../install/ChemDoodleWeb.js"></script>
+<link rel="stylesheet" href="../install/sketcher/jquery-ui-1.8.7.custom.css" type="text/css">
+<script type="text/javascript" src="../install/sketcher/jquery-ui-1.8.7.custom.min.js"></script>
+<script type="text/javascript" src="../install/sketcher/ChemDoodleWeb-sketcher.js"></script>
+<title>ChemDoodle Web Component Sketcher</title>
+</head>
+<body>
+<script>
+	// changes the default JMol color of hydrogen to black so it appears on white backgrounds
+	ChemDoodle.ELEMENT['H'].jmolColor = 'black';
+	// darkens the default JMol color of sulfur so it appears on white backgrounds
+	ChemDoodle.ELEMENT['S'].jmolColor = '#B9A130';
+	// initializes the SketcherCanvas; make sure to set the path to the icons correctly!
+	var sketcher = new ChemDoodle.SketcherCanvas('sketcher', 500, 300, '../install/sketcher/icons/', ChemDoodle.featureDetection.supports_touch(), true);
+	// sets terminal carbon labels to display
+	sketcher.specs.atoms_displayTerminalCarbonLabels_2D = true;
+	// sets atom labels to be colored by JMol colors, which are easy to recognize
+	sketcher.specs.atoms_useJMOLColors = true;
+	// the following two settings add overlap clear widths, so that some depth is introduced to overlapping bonds
+	sketcher.specs.bonds_clearOverlaps_2D = true;
+	sketcher.specs.bonds_overlapClearWidth_2D = 2;
+	// the component needs to be repainted here because we do not call the <em>Canvas.loadMolecule()</em> function
+	sketcher.repaint();
+</script>
+<br>
+<a href="http://web.chemdoodle.com" title="Open Source HTML5 Chemistry - ChemDoodle Web Components"><img src="http://web.chemdoodle.com/resources/images/badges/badge120x60.png" /></a>
+</body>
+</html>
