@@ -6896,163 +6896,92 @@ ChemDoodle.RESIDUE = (function() {
 	io.JCAMPInterpreter = function() {
 		this.convertHZ2PPM = false;
 		this.read = function(content) {
-			
 			this.isBreak = function(c) {
 				return SQZ_HASH[c] != null || DIF_HASH[c] != null || DUP_HASH[c] != null || c == ' ' || c == '-' || c == '+';
 			};
-			this.getValue = function(decipher) {
+			this.getValue = function(decipher, lastDif) {
 				var first = decipher.charAt(0);
 				var rest = decipher.substring(1);
 				if (SQZ_HASH[first] != null) {
 					return parseFloat(SQZ_HASH[first] + rest);
 				} else if (DIF_HASH[first] != null) {
-					return parseFloat(DIF_HASH[first] + rest);
+					return parseFloat(DIF_HASH[first] + rest) + lastDif;
 				}
-				return parseFloat(first+rest);
-			};
-			this.convertToFloatArray = function (stringArray) {
-				var floatArray=[];
-				for (var i=0; i<stringArray.length; i++) {
-					floatArray[i]=parseFloat(stringArray[i]);
-				}
-				return floatArray;
+				return parseFloat(rest);
 			};
 			var spectrum = new structures.Spectrum();
 			if (content == null || content.length == 0) {
 				return spectrum;
 			}
-			var ntuples={};
-			
-			var lines = content.split(/[\n\r]+/);
+			var lines = content.split('\n');
 			var sb = [];
-			var xLast, xFirst, yFirst, nPoints, xFactor = 1, yFactor = 1, observeFrequency = 1, deltaX = -1, shiftOffsetNum = undefined, shiftOffsetVal = undefined;
+			var xLast, xFirst, yFirst, nPoints, xFactor = 1, yFactor = 1, observeFrequency = 1, deltaX = -1, shiftOffsetNum = -1, shiftOffsetVal = -1;
 			var recordMeta = true, divideByFrequency = false;
-			for ( var i = 0, ii=lines.length; i < ii; i++) {
+			for ( var i = 0, ii = lines.length; i < ii; i++) {
 				var use = trim(lines[i]);
-				
-				var index = use.indexOf('$$'); // we check if the are any comments, everything after is suppressed
+				var index = q.inArray('$$', use);
 				if (index != -1) {
 					use = use.substring(0, index);
 				}
-				var append=false;
-				if (sb.length == 0 || !extensions.stringStartsWith(lines[i], '##')) { // we continue the previous line
+				if (sb.length == 0 || !extensions.stringStartsWith(lines[i], '##')) {
 					if (sb.length != 0) {
 						sb.push('\n');
 					}
 					sb.push(trim(use));
-					append=true;
-				} 
-				
-				// we allow the jcamp that don't finish by ##END to be also readable ...
-				
-				if (!append || lines.length==(i+1)) { // we analyse the data each time we meed a new LDR. This means without ##END it will never be analyzed
-					
+				} else {
 					var currentRecord = sb.join('');
-					// based on specifications we create an uppercase simplified dataLabel
-					var currentDataLabel=sb[0].replace(/^##([^=]*)=.*/,"$1").replace(/[ _\/-]/g,"").toUpperCase();
 					if (recordMeta && currentRecord.length < 100) {
 						spectrum.metadata.push(currentRecord);
 					}
-					currentRecord=trim(currentRecord.replace(/^[^=]*=/,""));
-					sb = [ use ]; // we define the new buffer for the next label
-
-					if (currentDataLabel=='DATATABLE') {
-						// ##DATA TABLE= (X++(I..I)), XYDATA
-						// We need to find the variable, we currently deal only with some specific case
-						var infos=currentRecord.substring(0,currentRecord.indexOf("\n")).split(/[ ,;\t]+/);
-						
-						var1=0;
-						var2=1;
-						
-						if (ntuples.first) {
-							xFirst=ntuples.first[var1];
-							yFirst=ntuples.first[var2];
-						}
-						if (ntuples.last) {
-							xLast=ntuples.last[var1];
-							yLast=ntuples.last[var2];
-						}
-						if (ntuples.vardim) {
-							nPoints=ntuples.vardim[var1];
-						}
-						if (ntuples.factor) {
-							xFactor=ntuples.factor[var1];
-							yFactor=ntuples.factor[var2];
-						}
-						if (ntuples.units) {
-							spectrum.xUnit=ntuples.units[var1];
-							spectrum.yUnit=ntuples.units[var2];
-						}
-						if (ntuples.units) {
-							deltaX=(xLast-xFirst)/(nPoints-1);
-						}
+					sb = [ use ];
+					if (extensions.stringStartsWith(currentRecord, '##TITLE=')) {
+						spectrum.title = trim(currentRecord.substring(8));
+					} else if (extensions.stringStartsWith(currentRecord, '##XUNITS=')) {
+						spectrum.xUnit = trim(currentRecord.substring(9));
 						if (this.convertHZ2PPM && spectrum.xUnit.toUpperCase() == 'HZ') {
 							spectrum.xUnit = 'PPM';
 							divideByFrequency = true;
 						}
-						
-						if (infos[1] && infos[1]=="PEAKS") currentDataLabel="PEAKTABLE";
-						if (infos[1] && infos[1]=="XYDATA") currentDataLabel="XYDATA";
-					}
-					
-					if (currentDataLabel=='TITLE') {
-						spectrum.title = currentRecord;
-					} else if (currentDataLabel=='XUNITS') {
-						spectrum.xUnit = currentRecord;
-						if (this.convertHZ2PPM && spectrum.xUnit.toUpperCase() == 'HZ') {
-							spectrum.xUnit = 'PPM';
-							divideByFrequency = true;
-						}
-					} else if (currentDataLabel=='YUNITS') {
-						spectrum.yUnit = currentRecord;
-					} else if (currentDataLabel=='XYPAIRS') {
+					} else if (extensions.stringStartsWith(currentRecord, '##YUNITS=')) {
+						spectrum.yUnit = trim(currentRecord.substring(9));
+					} else if (extensions.stringStartsWith(currentRecord, '##XYPAIRS=')) {
 						// spectrum.yUnit =
 						// trim(currentRecord.substring(9));
-					} else if (currentDataLabel=='FIRSTX') {
-						xFirst = parseFloat(currentRecord);
-					} else if (currentDataLabel=='LASTX') {
-						xLast = parseFloat(currentRecord);
-					} else if (currentDataLabel=='FIRSTY') {
-						yFirst = parseFloat(currentRecord);
-					} else if (currentDataLabel=='NPOINTS') {
-						nPoints = parseFloat(currentRecord);
-					} else if (currentDataLabel=='XFACTOR') {
-						xFactor = parseFloat(currentRecord);
-					} else if (currentDataLabel=='YFACTOR') {
-						yFactor = parseFloat(currentRecord);
-					} else if (currentDataLabel=='DELTAX') {
-						deltaX = parseFloat(currentRecord);
-					} else if (currentDataLabel=='.OBSERVEFREQUENCY') {
+					} else if (extensions.stringStartsWith(currentRecord, '##FIRSTX=')) {
+						xFirst = parseFloat(trim(currentRecord.substring(9)));
+					} else if (extensions.stringStartsWith(currentRecord, '##LASTX=')) {
+						xLast = parseFloat(trim(currentRecord.substring(8)));
+					} else if (extensions.stringStartsWith(currentRecord, '##FIRSTY=')) {
+						yFirst = parseFloat(trim(currentRecord.substring(9)));
+					} else if (extensions.stringStartsWith(currentRecord, '##NPOINTS=')) {
+						nPoints = parseFloat(trim(currentRecord.substring(10)));
+					} else if (extensions.stringStartsWith(currentRecord, '##XFACTOR=')) {
+						xFactor = parseFloat(trim(currentRecord.substring(10)));
+					} else if (extensions.stringStartsWith(currentRecord, '##YFACTOR=')) {
+						yFactor = parseFloat(trim(currentRecord.substring(10)));
+					} else if (extensions.stringStartsWith(currentRecord, '##DELTAX=')) {
+						deltaX = parseFloat(trim(currentRecord.substring(9)));
+					} else if (extensions.stringStartsWith(currentRecord, '##.OBSERVE FREQUENCY=')) {
 						if (this.convertHZ2PPM) {
-							observeFrequency = parseFloat(currentRecord);
+							observeFrequency = parseFloat(trim(currentRecord.substring(21)));
 						}
-					} else if (currentDataLabel=='$OFFSET') {	// OFFSET for Bruker spectra
+					} else if (extensions.stringStartsWith(currentRecord, '##.SHIFT REFERENCE=')) {
 						if (this.convertHZ2PPM) {
-							shiftOffsetNum = 0;
-							shiftOffsetVal = parseFloat(currentRecord);
-						}
-					} else if (currentDataLabel=='$REFERENCEPOINT') {	// OFFSET for Varian spectra
-				
-
-					} else if (currentDataLabel=='.SHIFTREFERENCE') {
-						if (this.convertHZ2PPM) {
-							var parts = currentRecord.replace(/[()]/g,"").split(',');
+							var parts = currentRecord.substring(19).split(',');
 							shiftOffsetNum = parseInt(trim(parts[2]));
 							shiftOffsetVal = parseFloat(trim(parts[3]));
 						}
-					} else if (currentDataLabel=='XYDATA') {
+					} else if (extensions.stringStartsWith(currentRecord, '##XYDATA=')) {
 						if (!divideByFrequency) {
 							observeFrequency = 1;
 						}
 						recordMeta = false;
-						
+						var lastWasDif = false;
 						var innerLines = currentRecord.split('\n');
 						var abscissaSpacing = (xLast - xFirst) / (nPoints - 1);
-						
-						var abscissaSpacing=deltaX;
 						// use provided deltaX if determined to be compressed
 						// and discontinuous
-					/*	if (deltaX != -1) {
+						if (deltaX != -1) {
 							for ( var j = 1, jj = innerLines.length; j < jj; j++) {
 								if (innerLines[j].charAt(0) == '|') {
 									abscissaSpacing = deltaX;
@@ -7060,16 +6989,15 @@ ChemDoodle.RESIDUE = (function() {
 								}
 							}
 						}
-						*/
-						var currentX = xFirst - abscissaSpacing;
-						var currentY = yFirst;
-						var lastDif = undefined; // at the beginning of each line there should be the full value X / Y so the diff is always undefined
+						var lastX = xFirst - abscissaSpacing;
+						var lastY = yFirst;
+						var lastDif = 0;
+						var lastOrdinate;
 						for ( var j = 1, jj = innerLines.length; j < jj; j++) {
 							var data = [];
 							var read = trim(innerLines[j]);
 							var sb = [];
 							var isCompressedDiscontinuous = false;
-							// we split the line in sperated values
 							for ( var k = 0, kk = read.length; k < kk; k++) {
 								if (this.isBreak(read.charAt(k))) {
 									if (sb.length > 0 && !(sb.length == 1 && sb[0] == ' ')) {
@@ -7085,132 +7013,58 @@ ChemDoodle.RESIDUE = (function() {
 								}
 							}
 							data.push(sb.join(''));
-					
-					// If we put this line some spectra will not work (like Varian) because they mixup the sign of the spacing
-					//		currentX = parseFloat(data[0]) * xFactor + xFirst - abscissaSpacing;
-							var expectedCurrentX = parseFloat(data[0]);
-														
-							for ( var k = 1, kk = data.length; k < kk; k++) {	
+							lastX = parseFloat(data[0]) * xFactor - abscissaSpacing;
+							for ( var k = 1, kk = data.length; k < kk; k++) {
 								var decipher = data[k];
-								if (k==1 && (lastDif || lastDif==0)) {
-									// we could check here if the previous value is really correct
-							//		console.log("LastDif: "+lastDif+" - "+expectedCurrentX+" - "+currentX+" - "+(expectedCurrentX-currentX)/deltaX);
-									
-									
-								} else {
-									if (DUP_HASH[decipher.charAt(0)] != null) {
-										// be careful when reading this, to keep
-										// spectra efficient, DUPS are actually
-										// discarded, except the last y!
-										var dup = parseInt(DUP_HASH[decipher.charAt(0)] + decipher.substring(1)) - 1;
-										
-										/** Non optmized way, good for testing but all the points are there **/
-										/*
-										for ( var l = 0; l < dup; l++) {
-											currentX += abscissaSpacing;
-											if (lastDif) {
-												currentY = currentY + lastDif;
-											}
-											spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
-										}
-										*/
-										
-										/** Optimized, if duplicates we just don't put them **/
-										currentX += abscissaSpacing*dup;
-										if (lastDif) {
-											currentY = currentY + lastDif*dup;
-										}
-
-
-										spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
-									} else if (DIF_HASH[decipher.charAt(0)] != null) {
-										currentX += abscissaSpacing;
-										lastDif = this.getValue(decipher);
-										currentY = currentY + lastDif;
-										spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
-									} else {
-										currentX += abscissaSpacing;
-										lastDif = undefined;
-										currentY = this.getValue(decipher);
-										spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
+								if (DUP_HASH[decipher.charAt(0)] != null) {
+									// be careful when reading this, to keep
+									// spectra efficient, DUPS are actually
+									// discarded, except the last y!
+									var dup = parseInt(DUP_HASH[decipher.charAt(0)] + decipher.substring(1)) - 1;
+									for ( var l = 0; l < dup; l++) {
+										lastX += abscissaSpacing;
+										lastDif = this.getValue(lastOrdinate, lastDif);
+										lastY = lastDif * yFactor;
+										count++;
+										spectrum.data[spectrum.data.length - 1] = new structures.Point(lastX / observeFrequency, lastY);
 									}
-								
-								}
-								
-								/*
+								} else {
 									if (!(SQZ_HASH[decipher.charAt(0)] != null && lastWasDif)) {
 										lastWasDif = DIF_HASH[decipher.charAt(0)] != null;
 										lastOrdinate = decipher;
-										currentX += abscissaSpacing;
+										lastX += abscissaSpacing;
 										lastDif = this.getValue(decipher, lastDif);
-										currentY = lastDif * yFactor;
-									//	count++;
-										spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY));
+										lastY = lastDif * yFactor;
+										count++;
+										spectrum.data.push(new structures.Point(lastX / observeFrequency, lastY));
 									} else {
-										currentY = this.getValue(decipher, lastDif) * yFactor;
+										lastY = this.getValue(decipher, lastDif) * yFactor;
 										if (isCompressedDiscontinuous) {
-											currentX += abscissaSpacing;
-											spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY));
+											lastX += abscissaSpacing;
+											spectrum.data.push(new structures.Point(lastX / observeFrequency, lastY));
 										}
 									}
-									*/
-								
-								
+								}
 							}
 						}
-						
-						if(shiftOffsetNum || shiftOffsetNum==0){
-							if (shiftOffsetNum>=spectrum.data.length) shiftOffsetNum=spectrum.data.length-1;
-							var dif = shiftOffsetVal - spectrum.data[shiftOffsetNum].x;
+						if(shiftOffsetNum!=-1){
+							var dif = shiftOffsetVal - spectrum.data[shiftOffsetNum-1].x;
 							for(var i = 0, ii = spectrum.data.length; i<ii; i++){
 								spectrum.data[i].x+=dif;
 							}
 						}
-						break; // we currently only take the first spectrum ...
-					} else if (currentDataLabel=='PEAKTABLE') {
+					} else if (extensions.stringStartsWith(currentRecord, '##PEAK TABLE=')) {
 						recordMeta = false;
 						spectrum.continuous = false;
 						var innerLines = currentRecord.split('\n');
+						var count = 0;
 						for ( var j = 1, jj = innerLines.length; j < jj; j++) {
 							var items = innerLines[j].split(/[\s,]+/);
+							count += items.length / 2;
 							for ( var k = 0, kk = items.length; k + 1 < kk; k += 2) {
 								spectrum.data.push(new structures.Point(parseFloat(trim(items[k])), parseFloat(trim(items[k + 1]))));
 							}
 						}
-						break; // we currently only take the first spectrum ...
-					} else if (currentDataLabel=='VARNAME') {
-						var parts = currentRecord.split(/[, \t]+/);
-						ntuples.varname=parts;
-					} else if (currentDataLabel=='SYMBOL') {
-						var parts = currentRecord.split(/[, \t]+/);
-						ntuples.symbol=parts;
-					} else if (currentDataLabel=='VARTYPE') {
-						var parts = currentRecord.split(/[, \t]+/);
-						ntuples.vartype=parts;
-					} else if (currentDataLabel=='VARFORM') {
-						var parts = currentRecord.split(/[, \t]+/);
-						ntuples.varform=parts;
-					} else if (currentDataLabel=='VARDIM') {
-						var parts = this.convertToFloatArray(currentRecord.split(/[, \t]+/));
-						ntuples.vardim=parts;
-					} else if (currentDataLabel=='UNITS') {
-						var parts = currentRecord.split(/[, \t]+/);
-						ntuples.units=parts;
-					} else if (currentDataLabel=='FACTOR') {
-						var parts = this.convertToFloatArray(currentRecord.split(/[, \t]+/));
-						ntuples.factor=parts;
-					} else if (currentDataLabel=='FIRST') {
-						var parts = this.convertToFloatArray(currentRecord.split(/[, \t]+/));
-						ntuples.first=parts;
-					} else if (currentDataLabel=='LAST') {
-						var parts = this.convertToFloatArray(currentRecord.split(/[, \t]+/));
-						ntuples.last=parts;
-					} else if (currentDataLabel=='MIN') {
-						var parts = this.convertToFloatArray(currentRecord.split(/[, \t]+/));
-						ntuples.min=parts;
-					} else if (currentDataLabel=='MAX') {
-						var parts = this.convertToFloatArray(currentRecord.split(/[, \t]+/));
-						ntuples.max=parts;
 					}
 				}
 			}

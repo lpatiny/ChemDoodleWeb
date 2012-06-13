@@ -1,0 +1,135 @@
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<link rel="stylesheet" href="../../install/ChemDoodleWeb.css" type="text/css">
+<script type="text/javascript" src="../../install/ChemDoodleWeb-libs.js"></script>
+<script type="text/javascript" src="../../src/ChemDoodleWeb-unpacked.js"></script>
+<title>ChemDoodle Web Component PerspectiveCanvas: Styled and Interactive Mass Spectrum</title>
+</head>
+<body>
+
+
+<table>
+<tr><td>
+<script>
+	// initialize component and set visual specifications
+	var perspective = new ChemDoodle.PerspectiveCanvas('perspective', 600, 400);
+	perspective.specs.plots_flipXAxis = true;
+	// change the plot line color to a green
+
+
+function addJcamp(url, options) {
+		jQuery.ajax({
+				url: url,
+				dataType:"text",
+				success: function(data, textStatus) {
+					var spectrum = ChemDoodle.readJCAMP(data);
+					
+					console.log(spectrum);
+					
+					perspective.loadSpectrum(spectrum);
+					
+					
+					var info="Nb points: "+spectrum.data.length;
+				/*	if (spectrum.data.length>10) {
+						for (var i=0; i<10; i++) {
+							console.log(spectrum.data[i]);
+						}
+					}*/
+					$("#info").html(info);
+					
+				}
+			}
+		);
+}
+	
+
+
+
+</script>
+</td>
+<td>
+<table border=1>
+<tr>
+<td>NMR</td><td>
+Bruker various compressions: 
+<button onClick="addJcamp('BRUKAFFN.DX');">BRUKAFFN.DX</button>
+<button onClick="addJcamp('BRUKDIF.DX');">BRUKDIF.DX</button>
+<button onClick="addJcamp('BRUKPAC.DX');">BRUKPAC.DX</button>
+<button onClick="addJcamp('BRUKSQZ.DX');">BRUKSQZ.DX</button>
+<br>
+Bruker, same spectrum, various compressions
+<button onClick="addJcamp('jcamp-difdup.dx');">jcamp-difdup.dx</button>
+<button onClick="addJcamp('jcamp-fix.dx');">jcamp-fix.dx</button>
+<button onClick="addJcamp('jcamp-packed.dx');">jcamp-packed.dx</button>
+<button onClick="addJcamp('jcamp-squeezed.dx');">jcamp-squeezed.dx</button>
+<br>
+Bruker, NTUPLES
+<button onClick="addJcamp('mdea.jdx');">mdea.jdx</button>
+<button onClick="addJcamp('mdma.jdx');">mdma.jdx</button>
+<br>
+Varian
+<button onClick="addJcamp('varian.jdx');">varian.jdx</button>
+<br>
+<button onClick="addJcamp('strychnine1r_jcamp5.dx');">strychnine1r_jcamp5.dx</button>
+<br>
+<button onClick="addJcamp('ib_01_01.jdx');">ib_01_01.jdx</button>
+<button onClick="addJcamp('ib_03_01.jdx');">ib_03_01.jdx</button>
+<button onClick="addJcamp('ib_03_04.jdx');">ib_03_04.jdx</button>
+<br>
+<button onClick="addJcamp('Hnmr_ACD.jdx');">Hnmr_ACD.jdx</button>
+
+</td>
+</tr>
+<tr>
+<td>IR</td>
+<td>
+<button onClick="addJcamp('ir_ACD.jdx');">ir_ACD.jdx</button>
+</td>
+</tr>
+<tr>
+<td>Mass</td>
+<td>
+<button onClick="addJcamp('MassFromLuc.jdx');">MassFromLuc.jdx</button>
+<button onClick="addJcamp('MassFrancoise.dx');">MassFrancoise.dx</button>
+<button onClick="addJcamp('ISAS_MS3.DX');">ISAS_MS3.DX</button>
+<button onClick="addJcamp('ISAS_MS1.DX');">ISAS_MS1.DX</button>
+
+
+
+
+</td>
+</tr>
+<tr>
+<td>UV</td>
+<td>
+<button onClick="addJcamp('iChemLabsInternalChloroethane.jdx');">iChemLabsInternalChloroethane.jdx</button>
+<button onClick="addJcamp('iChemLabsInternalChloroethane-new.jdx');">iChemLabsInternalChloroethane-new.jdx</button>
+</td>
+</tr>
+
+
+<br>
+
+
+<br>
+<button onClick="addJcamp('testlabel.jdx');">testlabel.jdx</button>
+<p>
+
+
+
+<br>
+
+
+
+</td>
+</tr>
+</table>
+
+<div id="info">
+
+</div>
+
+</body>
+</html>
+
