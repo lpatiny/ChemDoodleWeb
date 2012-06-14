@@ -6896,7 +6896,6 @@ ChemDoodle.RESIDUE = (function() {
 	io.JCAMPInterpreter = function() {
 		this.convertHZ2PPM = false;
 		this.read = function(content) {
-			
 			this.isBreak = function(c) {
 				return SQZ_HASH[c] != null || DIF_HASH[c] != null || DUP_HASH[c] != null || c == ' ' || c == '-' || c == '+';
 			};
@@ -6917,7 +6916,9 @@ ChemDoodle.RESIDUE = (function() {
 				}
 				return floatArray;
 			};
+			
 			var spectrum = new structures.Spectrum();
+			var firstSpectrum=spectrum;
 			if (content == null || content.length == 0) {
 				return spectrum;
 			}
@@ -6925,7 +6926,7 @@ ChemDoodle.RESIDUE = (function() {
 			
 			var lines = content.split(/[\n\r]+/);
 			var sb = [];
-			var xLast, xFirst, yFirst, nPoints, xFactor = 1, yFactor = 1, observeFrequency = 1, deltaX = -1, shiftOffsetNum = undefined, shiftOffsetVal = undefined;
+			var xLast, xFirst, yFirst, nPoints, xFactor = 1, yFactor = 1, observeFrequency = 1, deltaX = undefined, shiftOffsetNum = undefined, shiftOffsetVal = undefined;
 			var recordMeta = true, divideByFrequency = false;
 			for ( var i = 0, ii=lines.length; i < ii; i++) {
 				var use = trim(lines[i]);
@@ -6955,8 +6956,16 @@ ChemDoodle.RESIDUE = (function() {
 					}
 					currentRecord=trim(currentRecord.replace(/^[^=]*=/,""));
 					sb = [ use ]; // we define the new buffer for the next label
-
 					if (currentDataLabel=='DATATABLE') {
+						if (spectrum.data.length>0) { // not the first spectrum, we create a new one
+							spectrum.next=new structures.Spectrum();
+							// we should duplicate all the information about axes, ...
+							spectrum.next.xUnit=spectrum.xUnit;
+							spectrum.next.yUnit=spectrum.yUnit;
+							spectrum.next.title=spectrum.title;
+							
+							spectrum=spectrum.next;
+						}
 						// ##DATA TABLE= (X++(I..I)), XYDATA
 						// We need to find the variable, we currently deal only with some specific case
 						var infos=currentRecord.substring(0,currentRecord.indexOf("\n")).split(/[ ,;\t]+/);
@@ -7048,11 +7057,14 @@ ChemDoodle.RESIDUE = (function() {
 						
 						var innerLines = currentRecord.split('\n');
 						var abscissaSpacing = (xLast - xFirst) / (nPoints - 1);
+						if (deltaX) {
+							abscissaSpacing=deltaX;
+						}
 						
-						var abscissaSpacing=deltaX;
 						// use provided deltaX if determined to be compressed
 						// and discontinuous
-					/*	if (deltaX != -1) {
+						
+						/*	if (deltaX != -1) {
 							for ( var j = 1, jj = innerLines.length; j < jj; j++) {
 								if (innerLines[j].charAt(0) == '|') {
 									abscissaSpacing = deltaX;
@@ -7063,6 +7075,9 @@ ChemDoodle.RESIDUE = (function() {
 						*/
 						var currentX = xFirst - abscissaSpacing;
 						var currentY = yFirst;
+						
+					//	console.log(currentX+" - "+currentY+" - "+deltaX);	
+						
 						var lastDif = undefined; // at the beginning of each line there should be the full value X / Y so the diff is always undefined
 						for ( var j = 1, jj = innerLines.length; j < jj; j++) {
 							var data = [];
@@ -7163,11 +7178,12 @@ ChemDoodle.RESIDUE = (function() {
 						if(shiftOffsetNum || shiftOffsetNum==0){
 							if (shiftOffsetNum>=spectrum.data.length) shiftOffsetNum=spectrum.data.length-1;
 							var dif = shiftOffsetVal - spectrum.data[shiftOffsetNum].x;
-							for(var i = 0, ii = spectrum.data.length; i<ii; i++){
-								spectrum.data[i].x+=dif;
+							for(var j = 0, jj = spectrum.data.length; j<jj; j++){
+								spectrum.data[j].x+=dif;
 							}
 						}
-						break; // we currently only take the first spectrum ...
+						
+						spectrum.setup();
 					} else if (currentDataLabel=='PEAKTABLE') {
 						recordMeta = false;
 						spectrum.continuous = false;
@@ -7178,7 +7194,7 @@ ChemDoodle.RESIDUE = (function() {
 								spectrum.data.push(new structures.Point(parseFloat(trim(items[k])), parseFloat(trim(items[k + 1]))));
 							}
 						}
-						break; // we currently only take the first spectrum ...
+						spectrum.setup();
 					} else if (currentDataLabel=='VARNAME') {
 						var parts = currentRecord.split(/[, \t]+/);
 						ntuples.varname=parts;
@@ -7215,8 +7231,8 @@ ChemDoodle.RESIDUE = (function() {
 					}
 				}
 			}
-			spectrum.setup();
-			return spectrum;
+
+			return firstSpectrum;
 		};
 	};
 

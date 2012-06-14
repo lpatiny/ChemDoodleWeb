@@ -15,32 +15,51 @@
 	// initialize component and set visual specifications
 	var perspective = new ChemDoodle.PerspectiveCanvas('perspective', 600, 400);
 	perspective.specs.plots_flipXAxis = true;
-	// change the plot line color to a green
-
-
+</script>
+<br>
+<script>
+	var perspective2 = new ChemDoodle.PerspectiveCanvas('perspective2', 600, 400);
+	perspective2.specs.plots_flipXAxis = true;
+</script>
+<br>
+<script>
+	var perspective3 = new ChemDoodle.PerspectiveCanvas('perspective3', 600, 400);
+	perspective3.specs.plots_flipXAxis = true;
+</script>
+<script>
 function addJcamp(url, options) {
 		jQuery.ajax({
 				url: url,
 				dataType:"text",
 				success: function(data, textStatus) {
+					var emptySpectrum=ChemDoodle.readJCAMP("");
+				
 					var spectrum = ChemDoodle.readJCAMP(data);
-					
-					console.log(spectrum);
-					
 					perspective.loadSpectrum(spectrum);
-					
 					
 					var info=[];
 					info.push("Nb points: "+spectrum.data.length);
 					
 					info.push("minX: "+spectrum.minX);
 					info.push("maxX: "+spectrum.maxX);
-					console.log(spectrum);
-				/*	if (spectrum.data.length>10) {
-						for (var i=0; i<10; i++) {
-							console.log(spectrum.data[i]);
-						}
-					}*/
+					
+					
+					if (spectrum.next) {
+						perspective2.loadSpectrum(spectrum.next);
+						spectrum=spectrum.next;
+					} else {
+						perspective2.loadSpectrum(emptySpectrum);
+					}
+
+					if (spectrum.next) {
+						perspective3.loadSpectrum(spectrum.next);
+						spectrum=spectrum.next;
+					} else {
+						perspective3.loadSpectrum(emptySpectrum);
+					}
+					
+
+		
 					$("#info").html(info.join("<br>"));
 					
 				}
@@ -49,11 +68,9 @@ function addJcamp(url, options) {
 }
 	
 
-
-
 </script>
 </td>
-<td>
+<td valign="top">
 <table border=1>
 <tr>
 <td>NMR</td><td>
@@ -73,16 +90,18 @@ Bruker, NTUPLES
 <button onClick="addJcamp('mdea.jdx');">mdea.jdx</button>
 <button onClick="addJcamp('mdma.jdx');">mdma.jdx</button>
 <br>
-Varian
 <button onClick="addJcamp('varian.jdx');">varian.jdx</button>
-<br>
+<button onClick="addJcamp('Hnmr_ACD.jdx');">Hnmr_ACD.jdx</button>
+<button onClick="addJcamp('c13nmr_ACD.jdx');">c13nmr_ACD.jdx</button>
 <button onClick="addJcamp('strychnine1r_jcamp5.dx');">strychnine1r_jcamp5.dx</button>
+<button onClick="addJcamp('mestrec.jdx');">mestrec.jdx</button>
+<button onClick="addJcamp('ea_01_01.jdx');">ea_01_01.jdx</button>
+<button onClick="addJcamp('h1_methyl_crotonate.jdx');">h1_methyl_crotonate.jdx</button>
 <br>
 <button onClick="addJcamp('ib_01_01.jdx');">ib_01_01.jdx</button>
 <button onClick="addJcamp('ib_03_01.jdx');">ib_03_01.jdx</button>
 <button onClick="addJcamp('ib_03_04.jdx');">ib_03_04.jdx</button>
 <br>
-<button onClick="addJcamp('Hnmr_ACD.jdx');">Hnmr_ACD.jdx</button>
 
 </td>
 </tr>
@@ -90,15 +109,17 @@ Varian
 <td>IR</td>
 <td>
 <button onClick="addJcamp('ir_ACD.jdx');">ir_ACD.jdx</button>
+<button onClick="addJcamp('PE1800.DX');">PE1800.DX</button>
+<button onClick="addJcamp('SPECFILE.DX');">SPECFILE.DX</button>
 </td>
 </tr>
 <tr>
 <td>Mass</td>
 <td>
 <button onClick="addJcamp('MassFromLuc.jdx');">MassFromLuc.jdx</button>
-<button onClick="addJcamp('MassFrancoise.dx');">MassFrancoise.dx</button>
 <button onClick="addJcamp('ISAS_MS3.DX');">ISAS_MS3.DX</button>
 <button onClick="addJcamp('ISAS_MS1.DX');">ISAS_MS1.DX</button>
+<button onClick="addJcamp('mass_ACD.jdx');">mass_ACD.jdx</button>
 
 
 
@@ -108,7 +129,8 @@ Varian
 <tr>
 <td>UV</td>
 <td>
-<button onClick="addJcamp('uv_ACD.jdx');">uv_ACD.jdx</button></td>
+<button onClick="addJcamp('uv_ACD.jdx');">uv_ACD.jdx</button>
+</td>
 </tr>
 
 
@@ -119,6 +141,15 @@ Varian
 <button onClick="addJcamp('testlabel.jdx');">testlabel.jdx</button>
 <p>
 
+
+
+<button onClick="addJcamp('dietanil.jdx');">dietanil.jdx</button>
+
+
+<button onClick="addJcamp('pa_01_01.jdx');">pa_01_01.jdx</button>
+
+
+<button onClick="addJcamp('testLabel.jdx');">testLabel.jdx</button>
 
 
 <br>
@@ -135,4 +166,7 @@ Varian
 
 </body>
 </html>
+
+
+
 
