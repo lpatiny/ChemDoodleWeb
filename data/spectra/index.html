@@ -28,43 +28,43 @@
 </script>
 <script>
 function addJcamp(url, options) {
-		jQuery.ajax({
-				url: url,
-				dataType:"text",
-				success: function(data, textStatus) {
-					var emptySpectrum=ChemDoodle.readJCAMP("");
-				
-					var spectrum = ChemDoodle.readJCAMP(data);
-					perspective.loadSpectrum(spectrum);
-					
-					var info=[];
-					info.push("Nb points: "+spectrum.data.length);
-					
-					info.push("minX: "+spectrum.minX);
-					info.push("maxX: "+spectrum.maxX);
-					
-					
-					if (spectrum.next) {
-						perspective2.loadSpectrum(spectrum.next);
-						spectrum=spectrum.next;
-					} else {
-						perspective2.loadSpectrum(emptySpectrum);
-					}
-
-					if (spectrum.next) {
-						perspective3.loadSpectrum(spectrum.next);
-						spectrum=spectrum.next;
-					} else {
-						perspective3.loadSpectrum(emptySpectrum);
-					}
-					
-
-		
-					$("#info").html(info.join("<br>"));
-					
-				}
+	jQuery.ajax({
+		url: url,
+		dataType:"text",
+		success: function(data, textStatus) {
+		processJcamp(data);
+			
 			}
-		);
+		}
+	);
+}
+	
+function processJcamp(data) {
+	var emptySpectrum=ChemDoodle.readJCAMP("");
+				
+	var spectrum = ChemDoodle.readJCAMP(data);
+	perspective.loadSpectrum(spectrum);
+	var info=[];
+	info.push("Nb points: "+spectrum.data.length);
+	
+	info.push("minX: "+spectrum.minX);
+	info.push("maxX: "+spectrum.maxX);
+				
+					
+	if (spectrum.next) {
+		perspective2.loadSpectrum(spectrum.next);
+		spectrum=spectrum.next;
+	} else {
+		perspective2.loadSpectrum(emptySpectrum);
+	}
+	if (spectrum.next) {
+		perspective3.loadSpectrum(spectrum.next);
+		spectrum=spectrum.next;
+	} else {
+		perspective3.loadSpectrum(emptySpectrum);
+	}
+					
+	$("#info").html(info.join("<br>"));
 }
 	
 
@@ -74,6 +74,7 @@ function addJcamp(url, options) {
 <table border=1>
 <tr>
 <td>NMR</td><td>
+<button onClick="addJcamp('sim.jdx');">sim.jdx</button><br>
 Bruker various compressions: 
 <button onClick="addJcamp('BRUKAFFN.DX');">BRUKAFFN.DX</button>
 <button onClick="addJcamp('BRUKDIF.DX');">BRUKDIF.DX</button>
@@ -158,6 +159,45 @@ Bruker, NTUPLES
 
 </td>
 </tr>
+<tr><td></td>
+<td>
+<textarea cols=50 rows=20 id="jcamp">
+##TITLE= Maximum beta inter-cluster(0), intra-cluster(0), Cluster size(9)    
+##JCAMP-DX= 5.00	Hook4 tools, Dec 2 2011
+##OWNER= 
+##DATATYPE= NMR SPECTRUM
+##DATA CLASS= XYDATA
+##.OBSERVE FREQUENCY= 400.0
+##.OBSERVE NUCLEUS= ^NUC_1H
+##.$DECIM= 0
+##.$DSPFVS= 0
+##.$FCOR= 1
+##.$SW_h= 4000
+##.$SW= 10
+##.$TD= 16384
+##.$BF1= 400
+##.$SFO1= 400
+##XUNITS=	PPM
+##YUNITS=	ARBITRARY UNITS
+##NPOINTS=	16384
+##FIRSTX=	10.000025000023875
+##LASTX=	-2.4999976125705814E-5
+##XFACTOR= 6.103918696209487E-4
+##YFACTOR= 100.0
+##MAXY= 95230.84806852692
+##DELTAX= -6.103918696209487E-4
+##XYDATA=(X++(Y..Y))
+16382@%U861J%sJ%J%KJMPJ7L3nl1j5oljTJUMJ0K1L2k2k7j2nljT%VJTKMPJ9L7%l7j8qlkj%JKNR
+12457B3K4L8k0l4j5olkjU%Tj%sj%U46J%S0J%TJ%JTLTQJ7L7Ql7j8mMJ7L7ll8j9qmkjU%Tj%UJ%T
+12039CJTKLOJ4L1J1l1j7nLJ4L1Kl4j7pmkjU%Tj%S0j%S205J%S1J%TJ%JTKTNJ1K6L3k5k7r%RK7T
+10765H6l0k5qJJ1K9K0l4k1pKJ2L0J2l6k1qnkjV%Uj%S1j%X870J%T2J%XJ%UJ%J%J%JTKJKLMNQJ1
+3806D4J9L3O4J45L40L07l85k97j25n6l0j7j1pnlTkTjU%jT%Tj%Uj%Xj%T3j%U744
+0@
+##END=
+</textarea>
+<button onClick="processJcamp($('#jcamp').val());">Put jcamp</button>
+</td></tr>
+
 </table>
 
 <div id="info">

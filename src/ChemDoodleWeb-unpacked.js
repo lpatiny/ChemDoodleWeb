@@ -7135,6 +7135,7 @@ ChemDoodle.RESIDUE = (function() {
 											if (lastDif) {
 												currentY = currentY + lastDif*dup;
 											}
+																			
 											spectrum.data.push(new structures.Point(currentX / observeFrequency, currentY * yFactor));
 										
 										}
